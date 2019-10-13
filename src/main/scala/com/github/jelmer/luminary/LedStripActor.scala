@@ -14,7 +14,7 @@ class LedStripActor extends Actor with ActorLogging {
   import com.github.jelmer.luminary.LedStripActor._
   import context._
 
-  lazy val pin: GpioPinDigitalOutput = {
+  private lazy val pin: GpioPinDigitalOutput = {
     val p = GpioFactory.getInstance().provisionDigitalOutputPin(RaspiPin.GPIO_01, "Light", PinState.LOW)
     p.setShutdownOptions(true, PinState.LOW)
     p
