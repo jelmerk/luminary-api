@@ -5,6 +5,8 @@
         </encoder>
     </appender>
 
+    <logger name="com.github.jelmer.luminary" level="DEBUG" />
+
     <root level="info">
         <appender-ref ref="STDOUT" />
     </root>

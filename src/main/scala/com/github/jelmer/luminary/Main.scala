@@ -21,6 +21,8 @@ object Main extends App with ApiRoutes with Logging {
 
   val pirSensorActor: ActorRef = system.actorOf(PirSensorActor.props, "pirSensorActor")
 
+  val orchestratorActor: ActorRef = system.actorOf(OrchestratorActor.props(ledStripActor, pirSensorActor), "orchestratorActor")
+
   lazy val routes: Route = apiRoute
 
   val serverBinding: Future[Http.ServerBinding] = Http()

@@ -1,23 +1,20 @@
 package com.github.jelmer.luminary
 
-import akka.actor.{Actor, ActorLogging, ActorRef, Cancellable, Props}
+import akka.actor.{Actor, ActorLogging, ActorRef, Props}
 import com.pi4j.io.gpio.event.{GpioPinDigitalStateChangeEvent, GpioPinListenerDigital}
 import com.pi4j.io.gpio.{GpioFactory, GpioPinDigitalInput, PinPullResistance, RaspiPin}
 
 import scala.collection.immutable.HashSet
-import scala.concurrent.duration._
 
 object PirSensorActor {
-
-  case object Enable
-
-  case object Disable
 
   case object Subscribe
 
   case object Unsubscribe
 
-  case object FetchState
+  case object MotionDetected
+
+  case object NoMotionDetected
 
   def props: Props = Props[PirSensorActor]
 
@@ -26,45 +23,32 @@ object PirSensorActor {
 class PirSensorActor extends Actor with ActorLogging {
 
   import PirSensorActor._
-  import context._
 
-  private val subscribers: HashSet[ActorRef] = HashSet.empty[ActorRef]
+  private lazy val sensor: GpioPinDigitalInput = GpioFactory.getInstance().provisionDigitalInputPin(RaspiPin.GPIO_04, PinPullResistance.PULL_DOWN)
+  sensor.setShutdownOptions(true)
+  sensor.addListener(new GpioPinListenerDigital() {
+    override def handleGpioPinDigitalStateChangeEvent(event: GpioPinDigitalStateChangeEvent): Unit = {
+      self ! event
+    }
+  })
 
-  private lazy val sensor: GpioPinDigitalInput = {
-    val s = GpioFactory.getInstance().provisionDigitalInputPin(RaspiPin.GPIO_02, PinPullResistance.PULL_DOWN)
-    s.setShutdownOptions(true)
+  override def receive: Receive = onMessage(HashSet.empty[ActorRef], detected = false)
 
+  private def onMessage(subscribers: HashSet[ActorRef], detected: Boolean): Receive = {
+    case e: GpioPinDigitalStateChangeEvent if e.getState.isHigh && !detected =>
+      subscribers.foreach { _ ! MotionDetected }
+      log.debug("motion detected")
+      context.become(onMessage(subscribers, detected = true))
 
-    s.addListener(new GpioPinListenerDigital() {
-
-
-//      @Override
-//      public void handleGpioPinDigitalStateChangeEvent(GpioPinDigitalStateChangeEvent event) {
-//        // display pin state on console
-//        System.out.println(" --> GPIO PIN STATE CHANGE: " + event.getPin() + " = " + event.getState());
-//      }
-      override def handleGpioPinDigitalStateChangeEvent(event: GpioPinDigitalStateChangeEvent): Unit = {
-        event.getState
-
-      }
-    })
-
-
-    s
-  }
-
-  val fetchTick: Cancellable = context.system.scheduler.schedule(Duration.Zero, 1.second, self, FetchState)
-
-  override def receive: Receive = onMessage(subscribers)
-
-  private def onMessage(subscribers: HashSet[ActorRef]): Receive = {
-    case FetchState =>
-
+    case e: GpioPinDigitalStateChangeEvent if e.getState.isLow && detected =>
+      subscribers.foreach { _ ! NoMotionDetected }
+      log.debug("no motion detected")
+      context.become(onMessage(subscribers, detected = false))
 
     case Subscribe =>
-      context.become(onMessage(subscribers + sender))
+      context.become(onMessage(subscribers + sender, detected))
 
     case Unsubscribe =>
-      context.become(onMessage(subscribers - sender))
+      context.become(onMessage(subscribers - sender, detected))
   }
 }
