@@ -2,6 +2,7 @@ package com.github.jelmer.luminary
 
 import akka.actor.{Actor, ActorLogging, Props}
 import com.pi4j.io.gpio._
+import GpioFactoryHolder.gpioFactory
 
 object LedStripActor {
   case object TurnOn
@@ -13,7 +14,7 @@ object LedStripActor {
 class LedStripActor extends Actor with ActorLogging {
   import com.github.jelmer.luminary.LedStripActor._
 
-  private val pin: GpioPinDigitalOutput = GpioFactory.getInstance().provisionDigitalOutputPin(RaspiPin.GPIO_01, "Light", PinState.LOW)
+  private val pin: GpioPinDigitalOutput = gpioFactory.provisionDigitalOutputPin(RaspiPin.GPIO_01, "Light", PinState.LOW)
   pin.setShutdownOptions(true, PinState.LOW)
 
   def on: Receive =  {

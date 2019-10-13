@@ -1,5 +1,4 @@
 import com.typesafe.sbt.packager.jdkpackager._
-import scala.sys.process._
 
 lazy val akkaHttpVersion = "10.1.8"
 lazy val akkaVersion = "2.6.0-M1"
@@ -11,7 +10,7 @@ lazy val root = (project in file("."))
       organization    := "com.github.jelmerk",
       scalaVersion    := "2.12.7",
       scalacOptions   := Seq("-unchecked", "-feature", "-deprecation", "-encoding", "utf8"),
-      version         := "git rev-parse HEAD".!!.split('\n').head.substring(0, 7) // scalastyle:ignore
+      version         := "0.1"
     )),
     name := "luminary-api",
 

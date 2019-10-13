@@ -1,10 +1,12 @@
 package com.github.jelmer.luminary
 
+import scala.collection.immutable.HashSet
+
 import akka.actor.{Actor, ActorLogging, ActorRef, Props}
 import com.pi4j.io.gpio.event.{GpioPinDigitalStateChangeEvent, GpioPinListenerDigital}
-import com.pi4j.io.gpio.{GpioFactory, GpioPinDigitalInput, PinPullResistance, RaspiPin}
+import com.pi4j.io.gpio.{GpioPinDigitalInput, PinPullResistance, RaspiPin}
 
-import scala.collection.immutable.HashSet
+import GpioFactoryHolder.gpioFactory
 
 object PirSensorActor {
 
@@ -24,7 +26,7 @@ class PirSensorActor extends Actor with ActorLogging {
 
   import PirSensorActor._
 
-  private lazy val sensor: GpioPinDigitalInput = GpioFactory.getInstance().provisionDigitalInputPin(RaspiPin.GPIO_04, PinPullResistance.PULL_DOWN)
+  private lazy val sensor: GpioPinDigitalInput = gpioFactory.provisionDigitalInputPin(RaspiPin.GPIO_04, PinPullResistance.PULL_DOWN)
   sensor.setShutdownOptions(true)
   sensor.addListener(new GpioPinListenerDigital() {
     override def handleGpioPinDigitalStateChangeEvent(event: GpioPinDigitalStateChangeEvent): Unit = {
