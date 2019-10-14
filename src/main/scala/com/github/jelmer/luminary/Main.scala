@@ -1,5 +1,6 @@
 package com.github.jelmer.luminary
 
+import com.sun.javafx.application.PlatformImpl
 import akka.actor.{ActorRef, ActorSystem}
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.server.Route
@@ -11,6 +12,8 @@ import scala.util.{Failure, Success}
 
 object Main extends App with ApiRoutes with Logging {
 
+  PlatformImpl.startup(() => ()) // needed to use the media library lib
+
   val config: Config = ConfigFactory.load()
 
   implicit val system: ActorSystem = ActorSystem()
@@ -18,10 +21,10 @@ object Main extends App with ApiRoutes with Logging {
   implicit val executor: ExecutionContext = system.dispatcher
 
   val ledStripActor: ActorRef = system.actorOf(LedStripActor.props, "ledStripActor")
-
   val pirSensorActor: ActorRef = system.actorOf(PirSensorActor.props, "pirSensorActor")
+  val speakerActor: ActorRef = system.actorOf(SpeakerActor.props, "speakerActor")
 
-  val orchestratorActor: ActorRef = system.actorOf(OrchestratorActor.props(ledStripActor, pirSensorActor), "orchestratorActor")
+  val orchestratorActor: ActorRef = system.actorOf(OrchestratorActor.props(ledStripActor, pirSensorActor, speakerActor), "orchestratorActor")
 
   lazy val routes: Route = apiRoute
 
